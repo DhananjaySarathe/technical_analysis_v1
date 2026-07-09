@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Trader's Chartbook — Candlesticks, Chart Patterns & Volume Tells</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0D1321;
+  --bg2:#111A2C;
+  --card:#151F33;
+  --card2:#1A2540;
+  --ink:#E9E4D6;
+  --ink-dim:#B7B3A6;
+  --muted:#7E8AA0;
+  --line:rgba(233,228,214,.10);
+  --line-soft:rgba(233,228,214,.06);
+  --amber:#E8A13D;
+  --amber-dim:rgba(232,161,61,.14);
+  --bull:#2EBD85;
+  --bull-dim:rgba(46,189,133,.15);
+  --bear:#F0544F;
+  --bear-dim:rgba(240,84,79,.15);
+  --blue:#5B8DEF;
+  --blue-dim:rgba(91,141,239,.14);
+  --radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *{transition:none!important;animation:none!important} }
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'IBM Plex Sans',system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--amber);color:#111}
+ 
+/* ---------- layout ---------- */
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:36px}
+main{min-width:0;padding-bottom:80px}
+ 
+/* ---------- sidebar ---------- */
+nav.side{position:sticky;top:0;align-self:start;height:100vh;padding:34px 0 24px;display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--line-soft)}
+nav.side .brand{font-family:'Zilla Slab',serif;font-weight:700;font-size:19px;letter-spacing:.2px;margin-bottom:4px;color:var(--ink)}
+nav.side .brand em{color:var(--amber);font-style:normal}
+nav.side .tagline{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:22px}
+nav.side a{
+  display:block;color:var(--muted);text-decoration:none;font-size:13.5px;font-weight:500;
+  padding:7px 12px;border-left:2px solid transparent;border-radius:0 8px 8px 0;
+  transition:color .15s,background .15s,border-color .15s;
+}
+nav.side a .n{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);margin-right:8px}
+nav.side a:hover{color:var(--ink);background:var(--line-soft)}
+nav.side a.active{color:var(--amber);border-left-color:var(--amber);background:var(--amber-dim)}
+nav.side a.active .n{color:var(--amber)}
+nav.side a:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+nav.side .foot{margin-top:auto;font-size:11.5px;color:var(--muted);line-height:1.5;padding-right:16px}
+ 
+/* ---------- hero ---------- */
+header.hero{padding:56px 0 26px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--amber);margin-bottom:14px}
+header.hero h1{font-family:'Zilla Slab',serif;font-weight:700;font-size:clamp(34px,5vw,54px);line-height:1.08;letter-spacing:-.01em;max-width:14ch}
+header.hero .sub{margin-top:16px;max-width:62ch;color:var(--ink-dim);font-size:17px}
+.legend{display:flex;gap:22px;margin-top:22px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+.hero-chart{margin-top:30px;background:var(--bg2);border:1px solid var(--line-soft);border-radius:var(--radius);padding:16px 10px 8px;overflow-x:auto}
+.hero-chart .cap{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;padding:0 10px 8px}
+ 
+/* ---------- search ---------- */
+.searchbar{position:sticky;top:0;z-index:30;background:linear-gradient(var(--bg) 82%,transparent);padding:14px 0 16px;margin-top:6px}
+.searchbar input{
+  width:100%;max-width:440px;background:var(--card);border:1px solid var(--line);color:var(--ink);
+  font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:10px 16px;border-radius:999px;outline:none;
+}
+.searchbar input:focus{border-color:var(--amber)}
+.searchbar input::placeholder{color:var(--muted)}
+ 
+/* ---------- sections ---------- */
+section.block{padding:46px 0 8px;scroll-margin-top:70px}
+.sec-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--amber)}
+section.block h2{font-family:'Zilla Slab',serif;font-weight:600;font-size:clamp(26px,3.4vw,36px);margin:8px 0 6px;letter-spacing:-.01em}
+.sec-intro{color:var(--ink-dim);max-width:72ch;margin-bottom:8px}
+.rule{height:1px;background:linear-gradient(90deg,var(--amber) 0,var(--line) 120px,var(--line) 100%);margin:18px 0 26px}
+ 
+/* ---------- cards ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:20px}
+.grid.wide{grid-template-columns:repeat(auto-fill,minmax(480px,1fr))}
+.card{
+  background:var(--card);border:1px solid var(--line-soft);border-radius:var(--radius);
+  padding:20px 20px 18px;display:flex;flex-direction:column;gap:12px;min-width:0;
+}
+.card:hover{border-color:var(--line)}
+.card h3{font-family:'Zilla Slab',serif;font-weight:600;font-size:20px;letter-spacing:.1px}
+.meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid}
+.t-bull{color:var(--bull);border-color:var(--bull);background:var(--bull-dim)}
+.t-bear{color:var(--bear);border-color:var(--bear);background:var(--bear-dim)}
+.t-neutral{color:var(--muted);border-color:var(--muted);background:var(--line-soft)}
+.t-cont{color:var(--blue);border-color:var(--blue);background:var(--blue-dim)}
+.t-both{color:var(--amber);border-color:var(--amber);background:var(--amber-dim)}
+.rel{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.06em}
+.rel b{color:var(--amber);font-weight:400;letter-spacing:2px}
+.chartbox{background:var(--bg2);border:1px solid var(--line-soft);border-radius:8px;padding:8px 4px 4px;overflow-x:auto}
+svg.chart{display:block;min-width:100%}
+.card .lbl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.card p.body{font-size:14.2px;color:var(--ink-dim);line-height:1.6}
+.card p.body b{color:var(--ink);font-weight:600}
+.tell{border-left:3px solid var(--amber);background:var(--amber-dim);border-radius:0 8px 8px 0;padding:10px 14px;font-size:13.8px;color:var(--ink-dim);line-height:1.6}
+.tell .tl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:3px}
+.tell b{color:var(--ink);font-weight:600}
+ 
+/* ---------- foundations ---------- */
+.found{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:20px}
+.found .card p.body{font-size:14.4px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.8px;color:var(--ink-dim)}
+.kv dt{font-family:'IBM Plex Mono',monospace;color:var(--amber);font-size:12px;padding-top:2px;white-space:nowrap}
+.kv dd{margin:0}
+ 
+/* ---------- playbook ---------- */
+.play{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
+ol.checks{list-style:none;counter-reset:c;display:flex;flex-direction:column;gap:10px}
+ol.checks li{counter-increment:c;display:grid;grid-template-columns:30px 1fr;gap:12px;font-size:14.2px;color:var(--ink-dim)}
+ol.checks li::before{content:counter(c,decimal-leading-zero);font-family:'IBM Plex Mono',monospace;color:var(--amber);font-size:12px;padding-top:2px}
+ol.checks li b{color:var(--ink)}
+ul.plain{list-style:none;display:flex;flex-direction:column;gap:9px;font-size:14.2px;color:var(--ink-dim)}
+ul.plain li{padding-left:18px;position:relative}
+ul.plain li::before{content:"—";position:absolute;left:0;color:var(--amber)}
+ul.plain b{color:var(--ink)}
+ 
+footer{border-top:1px solid var(--line-soft);margin-top:60px;padding:26px 0 40px;font-size:12.5px;color:var(--muted);line-height:1.7;max-width:78ch}
+ 
+/* ---------- responsive ---------- */
+@media (max-width:920px){
+  .wrap{grid-template-columns:1fr;gap:0}
+  nav.side{position:sticky;top:0;height:auto;flex-direction:row;align-items:center;gap:2px;overflow-x:auto;
+    background:rgba(13,19,33,.92);backdrop-filter:blur(8px);border-right:0;border-bottom:1px solid var(--line-soft);
+    padding:10px 4px;z-index:40;white-space:nowrap}
+  nav.side .brand,nav.side .tagline,nav.side .foot{display:none}
+  nav.side a{border-left:0;border-bottom:2px solid transparent;border-radius:8px;padding:6px 10px;font-size:12.5px;flex:0 0 auto}
+  nav.side a.active{border-bottom-color:var(--amber)}
+  .grid,.grid.wide{grid-template-columns:1fr}
+  header.hero{padding-top:30px}
+  .searchbar{top:46px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+ 
+<nav class="side" id="sideNav">
+  <div class="brand">The <em>Chartbook</em></div>
+  <div class="tagline">Price · Pattern · Volume</div>
+  <a href="#foundations"><span class="n">01</span>Foundations</a>
+  <a href="#singles"><span class="n">02</span>Single-Candle Signals</a>
+  <a href="#doubles"><span class="n">03</span>Two-Candle Signals</a>
+  <a href="#triples"><span class="n">04</span>Multi-Candle Signals</a>
+  <a href="#chartpatterns"><span class="n">05</span>Chart Patterns</a>
+  <a href="#volume"><span class="n">06</span>Volume & Hidden Tells</a>
+  <a href="#playbook"><span class="n">07</span>The Playbook</a>
+  <div class="foot">A pattern is a hypothesis, not a promise. Context, volume and risk control decide whether it pays.</div>
+</nav>
+ 
+<main>
+<header class="hero">
+  <div class="eyebrow">Technical Analysis · Candlesticks · Chart Patterns · Volume</div>
+  <h1>The Trader's Chartbook</h1>
+  <p class="sub">A field guide that starts at the anatomy of one candle and ends at the tells most people never look for — what volume whispers, where fakeouts hunt stops, and why patterns fail. Every diagram below is drawn to scale so your eye learns the real shape, not a cartoon of it.</p>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--bull)"></i> Bullish candle (close &gt; open)</span>
+    <span><i class="dot" style="background:var(--bear)"></i> Bearish candle (close &lt; open)</span>
+    <span><i class="dot" style="background:var(--amber)"></i> Annotation / key volume</span>
+  </div>
+  <div class="hero-chart">
+    <div class="cap">One chart, the whole course — downtrend → climax → base → spring → breakout → retest</div>
+    <div id="heroChart"></div>
+  </div>
+</header>
+ 
+<div class="searchbar"><input id="search" type="search" placeholder="Search patterns… e.g. hammer, flag, engulfing, volume" aria-label="Search patterns"></div>
+ 
+<section class="block" id="foundations">
+  <div class="sec-eyebrow">Section 01</div>
+  <h2>Foundations — read one candle before you read a thousand</h2>
+  <p class="sec-intro">Everything in this book is built from four numbers: <b>Open, High, Low, Close</b>. A candle is a compressed battle report of buyers versus sellers for one unit of time. Learn to read the report and every pattern later becomes obvious instead of memorized.</p>
+  <div class="rule"></div>
+  <div class="found" id="foundGrid"></div>
+</section>
+ 
+<section class="block" id="singles">
+  <div class="sec-eyebrow">Section 02</div>
+  <h2>Single-Candle Signals</h2>
+  <p class="sec-intro">One candle can flag a shift — but only <b>where it appears</b>. A hammer in the middle of nowhere is noise; a hammer at support after a stretched decline is information. Every card states the required context. Reliability dots (● ● ●) are a rough guide assuming correct context + confirmation.</p>
+  <div class="rule"></div>
+  <div class="grid" id="singleGrid"></div>
+</section>
+ 
+<section class="block" id="doubles">
+  <div class="sec-eyebrow">Section 03</div>
+  <h2>Two-Candle Signals</h2>
+  <p class="sec-intro">Two-candle patterns show a <b>hand-over of control</b> — one side finishes its move, the other side answers. The size of the answer, and the volume behind it, tells you how serious the new side is.</p>
+  <div class="rule"></div>
+  <div class="grid" id="doubleGrid"></div>
+</section>
+ 
+<section class="block" id="triples">
+  <div class="sec-eyebrow">Section 04</div>
+  <h2>Three-Candle & Multi-Candle Signals</h2>
+  <p class="sec-intro">Three-candle patterns tell a complete story: <b>climax → pause → reversal</b>. They are slower to appear but generally more reliable than single candles, because the market has had time to prove the turn.</p>
+  <div class="rule"></div>
+  <div class="grid" id="tripleGrid"></div>
+</section>
+ 
+<section class="block" id="chartpatterns">
+  <div class="sec-eyebrow">Section 05</div>
+  <h2>Chart Patterns</h2>
+  <p class="sec-intro">Chart patterns are crowd psychology drawn over days and weeks. Each one has three tradeable parts: the <b>boundary line</b> (neckline / trendline), the <b>measured target</b> (pattern height projected from the break), and a <b>volume signature</b> that separates real breaks from traps. The volume pane below each chart is part of the pattern — never read one without it.</p>
+  <div class="rule"></div>
+  <div class="grid wide" id="chartGrid"></div>
+</section>
+ 
+<section class="block" id="volume">
+  <div class="sec-eyebrow">Section 06</div>
+  <h2>Volume & Hidden Tells</h2>
+  <p class="sec-intro">This is the part most beginners skip and most professionals live on. Price tells you <b>what</b> happened; volume tells you <b>who</b> was behind it and how committed they were. These are the quiet observations — effort vs result, dry-ups, springs, climaxes — that turn patterns from decoration into edge.</p>
+  <div class="rule"></div>
+  <div class="grid wide" id="volGrid"></div>
+</section>
+ 
+<section class="block" id="playbook">
+  <div class="sec-eyebrow">Section 07</div>
+  <h2>The Playbook — turning patterns into trades</h2>
+  <p class="sec-intro">Pattern recognition is maybe 20% of trading. The other 80% is context, entry discipline, position sizing and exits. This is the part that decides whether the same knowledge makes or loses money.</p>
+  <div class="rule"></div>
+  <div class="play" id="playGrid"></div>
+</section>
+ 
+<footer>
+  <b style="color:var(--ink)">Educational reference only.</b> Nothing here is investment advice or a recommendation to buy or sell any security. Patterns describe probabilities, not certainties — the same setup wins and loses depending on market regime, timeframe and execution. Backtest, paper-trade, size small, and always know your exit before your entry.
+</footer>
+ 
+</main>
+</div>
+<script>
+/* ============================================================
+   Candle chart engine — data-drawn SVG, no libraries
+   ============================================================ */
+const V = (n)=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+ 
+function svgChart(cfg){
+  const cs = cfg.candles, n = cs.length;
+  const step = cfg.step || 26, cw = cfg.cw || 14, pad = 18;
+  const W = pad*2 + n*step;
+  const vols = cfg.vol || (cs.some(c=>c.v!=null) ? cs.map(c=>c.v||0) : null);
+  const plotH = cfg.h || 190, volGap = vols?12:0, volH = vols?44:0;
+  const H = pad*2 + plotH + volGap + volH;
+  let hi=-1e9, lo=1e9;
+  cs.forEach(c=>{ hi=Math.max(hi,c.h); lo=Math.min(lo,c.l); });
+  (cfg.lines||[]).forEach(L=>{ hi=Math.max(hi,L.a[1],L.b[1]); lo=Math.min(lo,L.a[1],L.b[1]); });
+  (cfg.levels||[]).forEach(L=>{ hi=Math.max(hi,L.p); lo=Math.min(lo,L.p); });
+  const span=(hi-lo)||1; hi+=span*0.09; lo-=span*0.09;
+  const y=p=>pad+(hi-p)/(hi-lo)*plotH;
+  const x=i=>pad+i*step+step/2;
+  const A='var(--amber)', BU='var(--bull)', BE='var(--bear)', MU='var(--muted)';
+  let s='';
+ 
+  (cfg.zones||[]).forEach(z=>{
+    const yt=y(Math.max(z.p1,z.p2)), yb=y(Math.min(z.p1,z.p2));
+    s+=`<rect x="${pad}" y="${yt}" width="${W-pad*2}" height="${yb-yt}" fill="${A}" opacity="0.08"/>`;
+  });
+  (cfg.levels||[]).forEach(L=>{
+    const yy=y(L.p);
+    s+=`<line x1="${pad}" y1="${yy}" x2="${W-pad}" y2="${yy}" stroke="${L.c||A}" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.85"/>`;
+    if(L.t) s+=`<text x="${L.tx!=null?x(L.tx):W-pad-4}" y="${yy+(L.dy!=null?L.dy:-6)}" text-anchor="${L.tx!=null?'middle':'end'}" font-family="IBM Plex Mono,monospace" font-size="10" fill="${L.c||A}">${L.t}</text>`;
+  });
+  (cfg.lines||[]).forEach(L=>{
+    s+=`<line x1="${x(L.a[0])}" y1="${y(L.a[1])}" x2="${x(L.b[0])}" y2="${y(L.b[1])}" stroke="${L.c||A}" stroke-width="1.4" ${L.dash?'stroke-dasharray="5 4"':''} opacity="0.9"/>`;
+    if(L.t){
+      const mx=(x(L.a[0])+x(L.b[0]))/2, my=(y(L.a[1])+y(L.b[1]))/2;
+      s+=`<text x="${mx}" y="${my+(L.dy!=null?L.dy:-8)}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="${L.c||A}">${L.t}</text>`;
+    }
+  });
+ 
+  cs.forEach((c,i)=>{
+    const up=c.c>=c.o, col=up?BU:BE;
+    const bt=y(Math.max(c.o,c.c)), bb=y(Math.min(c.o,c.c));
+    const bh=Math.max(bb-bt,1.6);
+    s+=`<line x1="${x(i)}" y1="${y(c.h)}" x2="${x(i)}" y2="${y(c.l)}" stroke="${col}" stroke-width="1.4"/>`;
+    s+=`<rect x="${x(i)-cw/2}" y="${bt}" width="${cw}" height="${bh}" fill="${col}" rx="1.5"/>`;
+  });
+ 
+  (cfg.notes||[]).forEach(nt=>{
+    const above = nt.at!=='below';
+    const py = y(nt.p);
+    const ty = above ? py-14 : py+20;
+    s+=`<line x1="${x(nt.i)}" y1="${above?py-10:py+10}" x2="${x(nt.i)}" y2="${above?py-4:py+4}" stroke="${A}" stroke-width="1.2"/>`;
+    const words=(nt.t||'').split('\n');
+    words.forEach((w,k)=>{
+      s+=`<text x="${x(nt.i)+(nt.dx||0)}" y="${above? ty-(words.length-1-k)*12 : ty+k*12}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="${A}">${w}</text>`;
+    });
+  });
+ 
+  if(vols){
+    const vmax=Math.max(...vols)||1;
+    const base=pad+plotH+volGap+volH;
+    s+=`<text x="${pad}" y="${pad+plotH+volGap+8}" font-family="IBM Plex Mono,monospace" font-size="9" letter-spacing="2" fill="${MU}">VOLUME</text>`;
+    vols.forEach((v,i)=>{
+      const h=Math.max(v/vmax*volH,1.5);
+      const hv=(cfg.hv||[]).includes(i);
+      const up=cs[i].c>=cs[i].o;
+      s+=`<rect x="${x(i)-cw/2}" y="${base-h}" width="${cw}" height="${h}" fill="${hv?A:(up?BU:BE)}" opacity="${hv?0.95:0.45}" rx="1.5"/>`;
+    });
+  }
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="candlestick diagram">${s}</svg>`;
+}
+ 
+/* --- shape generators for multi-week chart patterns --- */
+function interp(keys,n){
+  const out=[];
+  for(let i=0;i<n;i++){
+    let j=0;
+    while(j<keys.length-1 && keys[j+1][0]<=i) j++;
+    if(j>=keys.length-1){ out.push(keys[keys.length-1][1]); continue; }
+    const [a,pa]=keys[j],[b,pb]=keys[j+1];
+    out.push(pa+(pb-pa)*(i-a)/(b-a));
+  }
+  return out;
+}
+function gen(keys,wig=0.5){
+  const n=keys[keys.length-1][0]+1;
+  const p=interp(keys,n), out=[];
+  let prev=p[0]-Math.sin(0)*wig;
+  for(let i=0;i<n;i++){
+    const cl=p[i]+Math.sin(i*2.63)*wig*0.5;
+    const op=prev;
+    const hiW=wig*(0.55+0.45*Math.abs(Math.sin(i*1.31+0.7)));
+    const loW=wig*(0.55+0.45*Math.abs(Math.cos(i*1.73)));
+    out.push({o:op,h:Math.max(op,cl)+hiW,l:Math.min(op,cl)-loW,c:cl});
+    prev=cl;
+  }
+  return out;
+}
+function volGen(keys,n,spikes){
+  const v=interp(keys,n).map(x=>Math.max(x,4));
+  (spikes||[]).forEach(([i,val])=>v[i]=val);
+  return v;
+}
+const C=(o,h,l,c)=>({o,h,l,c});
+const REL=r=>`Reliability <b>${'●'.repeat(r)}${'○'.repeat(3-r)}</b>`;
+const TAGS={bull:['t-bull','Bullish reversal'],bear:['t-bear','Bearish reversal'],neutral:['t-neutral','Indecision'],cont:['t-cont','Continuation'],both:['t-both','Bullish / Bearish'],concept:['t-both','Core concept']};
+ 
+function card(p){
+  const [cls,label]=TAGS[p.type];
+  let h=`<article class="card" data-search="${(p.name+' '+label+' '+(p.keys||'')).toLowerCase()}">`;
+  h+=`<div><h3>${p.name}</h3><div class="meta" style="margin-top:6px"><span class="tag ${cls}">${p.tagText||label}</span>${p.rel?`<span class="rel">${REL(p.rel)}</span>`:''}</div></div>`;
+  if(p.chart) h+=`<div class="chartbox">${svgChart(p.chart)}</div>`;
+  if(p.look) h+=`<div><p class="lbl">What it looks like</p><p class="body">${p.look}</p></div>`;
+  if(p.psych) h+=`<div><p class="lbl">Psychology</p><p class="body">${p.psych}</p></div>`;
+  if(p.trade) h+=`<div><p class="lbl">How to trade it</p><p class="body">${p.trade}</p></div>`;
+  if(p.tell) h+=`<div class="tell"><span class="tl">Hidden tell</span>${p.tell}</div>`;
+  h+=`</article>`;
+  return h;
+}
+ 
+/* ============================================================
+   SECTION 01 — FOUNDATIONS
+   ============================================================ */
+const FOUND=[
+{
+  name:'Anatomy of a candle', type:'concept', tagText:'Start here', keys:'ohlc open high low close body wick shadow anatomy',
+  chart:{h:170, candles:[C(96,103.5,94.5,102),C(102,104.6,95.4,96.6)],
+    step:120, cw:34,
+    notes:[
+      {i:0,p:103.5,t:'HIGH'},{i:0,p:94.5,t:'LOW',at:'below'},
+      {i:1,p:104.6,t:'HIGH'},{i:1,p:95.4,t:'LOW',at:'below'}
+    ],
+    levels:[{p:102,t:'CLOSE (bull) / OPEN (bear)',dy:-6},{p:96,t:'OPEN (bull) / CLOSE (bear)',dy:14}]},
+  look:'The <b>body</b> is the distance between open and close — it measures conviction. The thin <b>wicks</b> (shadows) mark the extremes that were reached and <i>rejected</i>. Green: buyers won the session. Red: sellers won.',
+  psych:'A long body = one side dominated start to finish. Long wicks = a fight happened there and the other side pushed price back. Body says who won; wicks say where the battle was.',
+  tell:'Wicks are often more informative than bodies. A long wick into a key level is a fingerprint of absorption — someone big took the other side of that move.'
+},
+{
+  name:'Trend structure — HH/HL vs LH/LL', type:'concept', tagText:'Core concept', keys:'trend uptrend downtrend higher high low structure dow',
+  chart:{h:170, wigNA:1, candles:gen([[0,93],[3,98.5],[5,96],[8,102],[10,99],[13,105.5]],0.5),
+    lines:[{a:[0,92.2],b:[13,103.4],c:'var(--amber)',t:'rising support',dy:14}],
+    notes:[{i:3,p:99.3,t:'HH'},{i:8,p:102.8,t:'HH'},{i:5,p:95.2,t:'HL',at:'below'},{i:10,p:98.2,t:'HL',at:'below'}]},
+  look:'An <b>uptrend</b> is a staircase of Higher Highs and Higher Lows. A <b>downtrend</b> is Lower Highs and Lower Lows. No staircase = range. This single definition (Dow Theory) settles the "what is the trend?" argument objectively.',
+  trade:'Trade reversal patterns <b>against</b> stretched trends at key levels; trade continuation patterns <b>with</b> the trend. The first Lower High after a series of Higher Highs is the earliest structural warning of a top.',
+  tell:'The trend officially changes character not at the top, but when a prior Higher Low <b>breaks</b>. Mark the last HL — it is the tripwire.'
+},
+{
+  name:'Support & Resistance', type:'concept', tagText:'Core concept', keys:'support resistance level zone flip role reversal',
+  chart:{h:170, candles:gen([[0,96],[2,99.6],[4,96.3],[6,99.7],[8,96.2],[10,99.5],[12,103.5],[14,100.4],[16,104.8]],0.45),
+    levels:[{p:99.8,t:'resistance → support',dy:-6}],
+    notes:[{i:14,p:99.2,t:'role flip retest',at:'below'}]},
+  look:'Levels where price repeatedly stalls. They are <b>zones</b>, not exact lines — draw a band, not a laser. The more times a level is touched (and the more volume that trades there), the more orders are stacked around it.',
+  psych:'Support/resistance is memory: trapped buyers who "just want out at breakeven", regretful sellers waiting to reload, and stop-loss clusters. That is why price reacts there.',
+  tell:'<b>Role reversal</b> is the highest-quality version: broken resistance becomes support (and vice versa). The first calm retest of a flipped level is one of the cleanest entries in trading.'
+},
+{
+  name:'Timeframes & context', type:'concept', tagText:'Core concept', keys:'timeframe multi timeframe daily weekly intraday context',
+  look:'Every pattern in this book works on any timeframe — but signal quality scales with timeframe. A hammer on the <b>weekly</b> chart carries far more weight than one on the 5-minute. Noise shrinks as the timeframe grows.',
+  trade:'Use a simple two-step: define bias on the higher timeframe (weekly/daily), execute on the lower (daily/hourly). Trading a bullish daily pattern <i>inside</i> a weekly downtrend is fighting the bigger current.',
+  tell:'When the same signal appears on two timeframes at the same level — e.g. a daily hammer forming the weekly candle\'s lower wick at support — probability compounds. This <b>confluence</b> is the quiet edge behind most good discretionary trades.'
+},
+{
+  name:'The three questions for any candle', type:'concept', tagText:'Mental model', keys:'mental model reading candles context location',
+  look:'Before naming a pattern, ask: <b>1) Where is it?</b> (at support/resistance, or in the middle of nowhere) <b>2) What came before?</b> (a stretched trend to reverse, or chop) <b>3) Who confirmed it?</b> (volume, and the next candle).',
+  psych:'Patterns are not magic shapes — they are shorthand for order flow. A "hammer" only means something because it shows sellers failing at a place where sellers <i>should have</i> succeeded.',
+  tell:'The same exact candle can be bullish in one location and meaningless in another. Location is 70% of the signal. When in doubt, zoom out.'
+}
+];
+ 
+/* ============================================================
+   SECTION 02 — SINGLE CANDLE
+   ============================================================ */
+const SINGLES=[
+{
+  name:'Hammer', type:'bull', rel:2, keys:'hammer pin bar rejection bottom',
+  chart:{candles:[C(101,102,99,99.6),C(99.6,100.2,97,97.6),C(97.6,98,94.8,95.2),C(95.2,95.6,91.8,92.2),C(92.2,92.8,88,92.5),C(92.5,96.4,92,96)],
+    vol:[42,46,52,58,118,84], hv:[4],
+    notes:[{i:4,p:88,t:'hammer',at:'below'},{i:5,p:96.4,t:'confirmation'}]},
+  look:'After a decline: small body at the <b>top</b> of the range, lower wick at least <b>2× the body</b>, little or no upper wick. Body colour matters less than the wick.',
+  psych:'Sellers drove price sharply lower intraday — then buyers absorbed everything and pushed it back to the top. The sellers who chased the low are now trapped underwater.',
+  trade:'Never buy the hammer itself. Trigger = next candle closing (or trading) <b>above the hammer\'s high</b>; stop below the hammer\'s low. Best at prior support / demand zones after a stretched drop.',
+  tell:'Check volume: a hammer on <b>elevated volume</b> means real absorption happened in that wick. A hammer on dead volume is just a quiet day shaped like a hammer.'
+},
+{
+  name:'Hanging Man', type:'bear', rel:1, keys:'hanging man top warning',
+  chart:{candles:[C(94,96,93.6,95.6),C(95.6,97.8,95.2,97.4),C(97.4,99.6,97,99.2),C(99.2,101,98.8,100.6),C(100.6,101.2,96.6,100.9),C(100.9,101,97.4,97.8)],
+    vol:[40,48,55,60,95,88], hv:[4],
+    notes:[{i:4,p:101.2,t:'hanging man'},{i:5,p:97.4,t:'confirmation',at:'below'}]},
+  look:'Identical shape to the hammer — small body on top, long lower wick — but it appears <b>after an advance</b>, at highs.',
+  psych:'For the first time in the uptrend, heavy selling appeared intraday. Buyers rescued the close, but the dip shows large supply is being distributed into strength.',
+  trade:'A warning, not a signal. Requires a bearish confirmation candle closing below the hanging man\'s body. Weakest pattern on this page on its own — treat it as "tighten stops", not "go short".',
+  tell:'The higher the volume on the hanging-man day, the more meaningful it is: big volume + no upward progress = distribution.'
+},
+{
+  name:'Inverted Hammer', type:'bull', rel:1, keys:'inverted hammer bottom',
+  chart:{candles:[C(102,102.6,100,100.4),C(100.4,100.8,97.8,98.2),C(98.2,98.6,95.4,95.8),C(95.8,99.8,95.4,96.4),C(96.4,100.2,96,99.8)],
+    vol:[44,50,56,90,102], hv:[3],
+    notes:[{i:3,p:99.8,t:'inverted hammer'},{i:4,p:100.2,t:'confirms'}]},
+  look:'After a decline: small body at the <b>bottom</b>, long upper wick. Looks weak (the rally failed) but is a tentative bottoming clue.',
+  psych:'Buyers tested higher prices for the first time in the downtrend. The rally was sold, but the probe itself shows demand waking up — shorts saw their profit shrink intraday.',
+  trade:'Strictly confirmation-dependent: only actionable if the next candle closes above the inverted hammer\'s body/high. Without that, it\'s just another lower-high.',
+  tell:'Its bearish twin (shooting star) is far more reliable. When you see an inverted hammer, what you\'re really waiting for is the <b>next</b> candle — that\'s the pattern.'
+},
+{
+  name:'Shooting Star', type:'bear', rel:2, keys:'shooting star top rejection upper wick',
+  chart:{candles:[C(93,95,92.6,94.6),C(94.6,96.8,94.2,96.4),C(96.4,98.6,96,98.2),C(98.2,102.4,98,98.8),C(98.8,99,95.2,95.6)],
+    vol:[45,52,58,120,96], hv:[3],
+    notes:[{i:3,p:102.4,t:'shooting star'},{i:4,p:95.2,t:'confirmation',at:'below'}]},
+  look:'After an advance: small body at the <b>bottom</b>, upper wick ≥ 2× the body. The mirror image of the hammer.',
+  psych:'Buyers gapped/pushed price to new highs — and were overwhelmed. Everyone who bought the upper half of that wick is losing money by the close. Euphoria met a wall of supply.',
+  trade:'Trigger = break of the star\'s low; stop above the star\'s high. Strongest at prior resistance, round numbers, or after 3+ accelerating green candles.',
+  tell:'A shooting star on the <b>highest volume in weeks</b> is often a buying climax — the crowd rushed in exactly where smart money unloaded. Volume turns this from a candle into an event.'
+},
+{
+  name:'Doji Family', type:'neutral', rel:1, keys:'doji dragonfly gravestone long legged indecision',
+  chart:{h:170, step:64, cw:16, candles:[C(100,100.9,99.1,100.05),C(100,102,98,100.06),C(100,100.3,97.4,99.96),C(100,102.6,99.8,100.04)],
+    notes:[{i:0,p:99.1,t:'standard',at:'below'},{i:1,p:98,t:'long-legged',at:'below'},{i:2,p:97.4,t:'dragonfly',at:'below'},{i:3,p:102.6,t:'gravestone'}]},
+  look:'Open ≈ close: the body is nearly a line. <b>Standard</b>: balance. <b>Long-legged</b>: violent balance. <b>Dragonfly</b>: sellers rejected (bullish at lows). <b>Gravestone</b>: buyers rejected (bearish at highs).',
+  psych:'A doji is a stalemate — but a stalemate <i>after a long trend</i> means the winning side has finally run out of pushing power. In the middle of a range it means nothing at all.',
+  trade:'Never trade a doji alone. It marks a decision point; the <b>next candle\'s break direction</b> is the trade. A doji at resistance followed by a red close = the market voted.',
+  tell:'A doji on huge volume after a long trend is far more significant than a quiet one: enormous effort produced zero progress. That effort/result mismatch is a classic exhaustion fingerprint.'
+},
+{
+  name:'Marubozu', type:'both', rel:2, tagText:'Momentum / conviction', keys:'marubozu full body momentum conviction',
+  chart:{candles:[C(100,101,98.5,99),C(99,99.8,97.6,98.2),C(98.2,103.8,98.1,103.7),C(103.7,104.5,102.8,104.2),C(104.2,104.4,99.6,99.7)],
+    notes:[{i:2,p:103.8,t:'bull marubozu'},{i:4,p:99.6,t:'bear marubozu',at:'below'}]},
+  look:'A full body with <b>no (or tiny) wicks</b> — open at one extreme, close at the other. The purest expression of one-sided control.',
+  psych:'One side was in charge from the opening print to the closing bell, with zero successful pushback. This is how institutions look when they are in a hurry.',
+  trade:'As a <b>breakout candle</b> through a level, a marubozu is the quality stamp you want — it shows the break had force. Mid-range marubozus matter less. Countertrend fading of a marubozu is usually a donation.',
+  tell:'Where the marubozu <b>closes</b> matters: closing at the exact high means buyers were still lifting offers at the bell — continuation next morning is common (gap-and-go behaviour).'
+},
+{
+  name:'Spinning Top', type:'neutral', rel:1, keys:'spinning top small body indecision pause',
+  chart:{candles:[C(96,98,95.6,97.6),C(97.6,99.6,97.2,99.2),C(99.2,100.9,97.9,99.5),C(99.5,100,97,97.4)],
+    notes:[{i:2,p:100.9,t:'spinning top'}]},
+  look:'Small body, wicks on <b>both</b> sides of similar length. Neither side could hold its gains.',
+  psych:'Two-way fight, no winner. After a strong run it means momentum is cooling; inside a range it is pure noise.',
+  trade:'Not tradeable alone — it lowers conviction in the current move. A cluster of spinning tops after a trend often precedes the actual reversal pattern.',
+  tell:'Watch for spinning tops appearing <b>while volume rises</b> near highs: rising effort, shrinking result. That combination frequently appears a few candles before evening stars and engulfings print.'
+}
+];
+ 
+/* ============================================================
+   SECTION 03 — TWO CANDLE
+   ============================================================ */
+const DOUBLES=[
+{
+  name:'Bullish Engulfing', type:'bull', rel:3, keys:'engulfing bullish outside reversal',
+  chart:{candles:[C(101,101.8,98.8,99.2),C(99.2,99.6,96.6,97),C(97,97.4,94.2,94.8),C(95.2,98.9,94,98.6),C(98.6,101.4,98.2,101)],
+    vol:[46,52,60,130,92], hv:[3],
+    notes:[{i:3,p:98.9,t:'engulfs prior body'},{i:2,p:94.2,t:'',at:'below'}]},
+  look:'After a decline: a green body that <b>completely swallows the previous red body</b> (opens below its close, closes above its open). The stricter version engulfs the wicks too.',
+  psych:'Everything sellers achieved yesterday was erased in one session — and then some. Every short from the prior candle is underwater. Forced covering fuels the follow-through.',
+  trade:'One of the most reliable candle signals. Entry on close of the engulfing candle or on a small pullback into its body; stop below the engulfing low. Best at support after an extended drop.',
+  tell:'Size grades it: engulfing 1 candle = good, engulfing the last <b>3–4 candles</b> = an institutional footprint. Add high relative volume and this becomes an A-grade signal.'
+},
+{
+  name:'Bearish Engulfing', type:'bear', rel:3, keys:'engulfing bearish outside reversal top',
+  chart:{candles:[C(95,96.2,94.6,95.8),C(95.8,97.6,95.4,97.2),C(97.2,99,96.8,98.6),C(98.9,99.4,95.9,96.1),C(96.1,96.4,93.6,94)],
+    vol:[44,50,58,125,90], hv:[3],
+    notes:[{i:3,p:99.4,t:'engulfs prior body'}]},
+  look:'After an advance: a red body that opens above the prior green close and closes below its open — swallowing it entirely.',
+  psych:'The morning gap-up sucked in late buyers, then supply crushed the whole prior day\'s gains. Late longs are trapped at the highs; their stops feed the decline.',
+  trade:'Entry on the close or on a weak bounce into the red body; stop above the engulfing high. Most potent at resistance, after a parabolic stretch, or on the third+ test of a supply zone.',
+  tell:'If the engulfing day\'s volume is the <b>largest of the entire up-move</b>, treat it as a distribution day — institutions used the strength to exit. Follow-through odds jump sharply.'
+},
+{
+  name:'Harami (+ Harami Cross)', type:'both', rel:1, tagText:'Reversal warning', keys:'harami inside bar cross pregnant',
+  chart:{candles:[C(102,102.6,99.8,100.2),C(100.2,100.6,97,97.4),C(97.4,97.8,93.4,93.8),C(94.8,96.2,94.4,95.9),C(95.9,98.6,95.6,98.2)],
+    notes:[{i:2,p:93.4,t:'big trend candle',at:'below'},{i:3,p:96.2,t:'inside body'}]},
+  look:'A large trend candle followed by a <b>small candle contained inside its body</b> — the opposite of engulfing. When the inside candle is a doji, it\'s a <b>Harami Cross</b> (stronger).',
+  psych:'The trend produced a huge candle… and then went nowhere. Momentum stalled exactly when it should have accelerated. The engine is sputtering.',
+  trade:'A yellow light, not a trade. It becomes tradeable when the range of the small candle breaks in the counter-trend direction. As an <b>inside bar</b>, its break is a classic trigger on any timeframe.',
+  tell:'Harami = the candlestick name; <b>inside bar</b> = the western name for the same thing. Inside-bar breaks in the direction of the higher-timeframe trend are a complete trading system for some professionals.'
+},
+{
+  name:'Piercing Line', type:'bull', rel:2, keys:'piercing line 50 percent bottom',
+  chart:{candles:[C(100,100.6,97.6,98),C(98,98.4,95,95.4),C(94.4,97.4,94,97.1),C(97.1,99.8,96.8,99.4)],
+    vol:[48,60,105,88], hv:[2],
+    notes:[{i:2,p:94,t:'opens below, closes >50%',at:'below'}]},
+  look:'After a decline: candle opens <b>below the prior red candle\'s low</b>, then rallies to close <b>above the midpoint</b> of that red body. Deeper close into the body = stronger.',
+  psych:'The gap-down was maximum pain for longs — and it was bought aggressively all day. Shorts who pressed the open watched their entire edge reverse.',
+  trade:'Trigger above the piercing candle\'s high; stop below its low. If the close reclaims more than ~50% but less than 100% of the red body, wait for confirmation — a full reclaim is just a bullish engulfing.',
+  tell:'The mirror-image logic explains its bearish twin (Dark Cloud Cover). The 50% midpoint of any large candle acts as its own micro support/resistance — worth marking even outside this pattern.'
+},
+{
+  name:'Dark Cloud Cover', type:'bear', rel:2, keys:'dark cloud cover top 50 percent',
+  chart:{candles:[C(95,95.8,94.6,95.5),C(95.5,97.6,95.2,97.3),C(97.3,99.9,97,99.6),C(100.4,100.8,97.7,97.9),C(97.9,98.2,95.4,95.8)],
+    vol:[42,50,58,112,86], hv:[3],
+    notes:[{i:3,p:100.8,t:'opens above high, closes <50%'}]},
+  look:'After an advance: candle opens <b>above the prior green high</b>, then sells off to close <b>below the midpoint</b> of the green body.',
+  psych:'The bullish gap trapped breakout buyers at the top; the all-day slide put every one of them at a loss. Optimism converted directly into overhead supply.',
+  trade:'Trigger below the pattern low; stop above the dark-cloud high. Quality scales with how deep the close cuts into the green body and how high the volume was.',
+  tell:'Gap-up-then-fail patterns are especially meaningful around <b>earnings/news</b>: good news that can\'t hold a rally means it was fully priced in — often the exact top of the move.'
+},
+{
+  name:'Tweezer Bottom / Top', type:'both', rel:1, tagText:'Level defence', keys:'tweezer bottom top equal lows highs',
+  chart:{candles:[C(101,101.6,98.6,99),C(99,99.4,96,96.4),C(96.4,96.8,93.2,93.8),C(93.9,96.6,93.25,96.2),C(96.2,98.9,95.8,98.5)],
+    levels:[{p:93.2,t:'identical lows',dy:14}],
+    notes:[{i:3,p:96.6,t:'tweezer bottom'}]},
+  look:'Two (or more) consecutive candles with <b>nearly identical lows</b> after a decline (tweezer bottom), or identical highs after an advance (tweezer top).',
+  psych:'Price hit the same level twice and was rejected both times — a resting order block is defending it. The second rejection proves the first wasn\'t luck.',
+  trade:'Weak alone; strong as evidence that a precise level matters. Trade the level, not the tweezer: enter on the reversal confirmation, stop just beyond the shared extreme.',
+  tell:'If the second test happens on <b>lower volume</b> than the first, sellers are exhausting — that quiet second touch is the higher-quality entry (this is the double-bottom logic in miniature).'
+}
+];
+ 
+/* ============================================================
+   SECTION 04 — THREE+ CANDLE
+   ============================================================ */
+const TRIPLES=[
+{
+  name:'Morning Star', type:'bull', rel:3, keys:'morning star three candle bottom',
+  chart:{candles:[C(105,105.6,102.6,103),C(103,103.4,100,100.4),C(100.4,100.8,97,97.4),C(96.6,97.4,95.4,96.2),C(96.8,101.6,96.4,101.2),C(101.2,103.4,100.8,103)],
+    vol:[46,52,64,58,124,90], hv:[4],
+    notes:[{i:3,p:95.4,t:'star',at:'below'},{i:4,p:101.6,t:'closes >50% of ①'}]},
+  look:'Three acts: ① a big red trend candle, ② a small-bodied "star" (any colour, ideally gapped lower), ③ a big green candle closing <b>above the midpoint of ①</b>.',
+  psych:'Decline → hesitation → reversal. The star is the moment sellers ran out of fuel; candle ③ is buyers seizing an empty battlefield. The full story of a bottom in three days.',
+  trade:'Enter on close of candle ③ or its minor pullback; stop below the star\'s low. Among the most trusted reversal patterns — especially on daily/weekly charts at major support.',
+  tell:'A <b>Morning Doji Star</b> (star is a doji) plus high volume on candle ③ is the strongest variant. Also check: if candle ③ engulfs both prior bodies, you have stacked signals in one.'
+},
+{
+  name:'Evening Star', type:'bear', rel:3, keys:'evening star three candle top',
+  chart:{candles:[C(95,97.4,94.6,97),C(97,99.6,96.6,99.2),C(99.2,102.6,98.9,102.3),C(102.8,103.8,102.4,103.1),C(102.7,102.9,98.4,98.8),C(98.8,99,96,96.4)],
+    vol:[44,52,66,60,128,94], hv:[4],
+    notes:[{i:3,p:103.8,t:'star'},{i:4,p:98.4,t:'closes <50% of ①',at:'below'}]},
+  look:'The top-side mirror: ① big green candle, ② small star hovering above it, ③ big red candle closing below the midpoint of ①.',
+  psych:'The star is euphoria stalling at altitude. Candle ③ is the recognition day — everyone who bought the last two weeks is suddenly wrong at once.',
+  trade:'Enter on close of ③ or the first weak bounce; stop above the star\'s high. High-reliability top pattern, best after extended rallies into resistance.',
+  tell:'Stars that form on a <b>gap up with huge volume then close weak</b> are classic exhaustion gaps (see Section 06) — the two concepts are the same event seen through different lenses.'
+},
+{
+  name:'Three White Soldiers', type:'bull', rel:2, keys:'three white soldiers advancing',
+  chart:{candles:[C(98,98.4,95.4,95.8),C(95.8,96,93,93.4),C(93.6,96.6,93.2,96.3),C(96.5,99.4,96,99.1),C(99.3,102.2,98.9,101.9)],
+    notes:[{i:2,p:93.2,t:'①',at:'below'},{i:3,p:96,t:'②',at:'below'},{i:4,p:98.9,t:'③',at:'below'}]},
+  look:'Three consecutive strong green candles, each opening <b>inside the prior body</b> and closing near its high, with small upper wicks.',
+  psych:'Not a spike but a march — steady, repeated buying that absorbs every intraday dip. This is what accumulation looks like when it stops hiding.',
+  trade:'Signals a trend change more than an entry — chasing candle ③ buys into short-term overextension. Better: wait for the first 2–3 candle pullback and buy the higher low it forms.',
+  tell:'Beware the "exhausted soldiers" variant: if each candle\'s body is <b>shrinking</b> and upper wicks are growing, the march is decelerating into supply — often right before a stall.'
+},
+{
+  name:'Three Black Crows', type:'bear', rel:2, keys:'three black crows decline',
+  chart:{candles:[C(96,99,95.6,98.6),C(98.6,101.6,98.2,101.2),C(101,101.4,98.2,98.5),C(98.3,98.7,95.4,95.7),C(95.5,95.9,92.6,92.9)],
+    notes:[{i:2,p:101.4,t:'①'},{i:3,p:98.7,t:'②'},{i:4,p:95.9,t:'③'}]},
+  look:'Three consecutive heavy red candles, each opening inside the prior body and closing near its low.',
+  psych:'Distribution turned into a procession. Every bounce attempt is sold at a lower level — holders are competing to exit, not to buy the dip.',
+  trade:'Confirms a top is in; like its bullish twin, the third candle is a poor entry (short-term oversold). Short the first weak, low-volume bounce toward the breakdown area instead.',
+  tell:'The pattern is most meaningful when it <b>breaks a well-watched support</b> on candle ② or ③ — pattern + level break + trapped longs all resolving together.'
+},
+{
+  name:'Three Inside Up / Down', type:'both', rel:2, tagText:'Confirmed harami', keys:'three inside up down harami confirmation',
+  chart:{candles:[C(103,103.6,100.6,101),C(101,101.4,97.4,97.8),C(98.4,100,98.1,99.8),C(99.9,102.3,99.6,102),C(102,103.8,101.6,103.4)],
+    notes:[{i:1,p:97.4,t:'big red',at:'below'},{i:2,p:100,t:'harami'},{i:3,p:102.3,t:'confirmation'}]},
+  look:'A harami (big candle + inside candle) <b>plus a third candle</b> that closes beyond the big candle\'s open — the confirmation built into the pattern.',
+  psych:'Stall (candle 2) resolves decisively (candle 3). It\'s the harami with its main weakness — no confirmation — repaired.',
+  trade:'Entry on candle ③\'s close; stop beyond candle ①\'s extreme. A tidy, rule-based pattern well suited to systematic/checklist trading.',
+  tell:'This pattern is a template for a general principle: <b>any warning candle + a confirming close = a tradeable event</b>. You can "build" confirmed versions of most patterns the same way.'
+},
+{
+  name:'Rising / Falling Three Methods', type:'cont', rel:2, tagText:'Continuation', keys:'rising falling three methods continuation rest',
+  chart:{candles:[C(92,94.2,91.6,94),C(94,97.8,93.6,97.5),C(97.4,97.9,96.4,96.7),C(96.7,97.1,95.8,96.1),C(96.1,96.5,95.2,95.6),C(95.8,99.9,95.5,99.6)],
+    vol:[55,95,40,34,30,120], hv:[5],
+    notes:[{i:1,p:97.8,t:'impulse'},{i:3,p:95.8,t:'quiet rest',at:'below'},{i:5,p:99.9,t:'resumes'}]},
+  look:'A big trend candle, then <b>3 small counter-trend candles that stay inside its range</b>, then another big candle in the trend direction making a new extreme.',
+  psych:'The trend takes a breath. Weak hands take profits, but sellers can\'t even fill the first candle\'s range — then the trend side returns at full force.',
+  trade:'This is a flag in candlestick clothing (see Section 05). Enter on the break of the resting range in the trend direction; stop below the rest\'s low.',
+  tell:'The signature is in the volume: <b>heavy on the impulse candles, dried-up on the three resting candles</b>. If the "rest" carries heavy volume instead, it isn\'t rest — it\'s a fight, and continuation is no longer the default.'
+}
+];
+</script>
+<script>
+/* ============================================================
+   SECTION 05 — CHART PATTERNS
+   ============================================================ */
+const CHARTS=[
+{
+  name:'Head & Shoulders', type:'bear', rel:3, keys:'head shoulders neckline top reversal',
+  chart:{candles:gen([[0,96],[3,102],[5,99.6],[9,106],[12,99.7],[15,102],[18,99.8],[21,93.5]],0.55),
+    vol:volGen([[0,85],[9,60],[15,34],[18,30],[21,30]],22,[[19,95],[20,110]]), hv:[19,20],
+    lines:[{a:[4,99.6],b:[19,99.6],t:'neckline',dy:14}],
+    notes:[{i:3,p:102.8,t:'LS'},{i:9,p:106.8,t:'HEAD'},{i:15,p:102.8,t:'RS'}]},
+  look:'Three peaks — the middle (head) highest, the shoulders lower and roughly level — on a <b>neckline</b> joining the two troughs. Completed only when price closes below the neckline.',
+  psych:'The head makes the final Higher High; the right shoulder is the first <b>Lower High</b> — buyers tried to retest the top and couldn\'t even reach it. Trend structure has already broken before the neckline does.',
+  trade:'Short the neckline break or (better) the pullback to it. <b>Target = head-to-neckline height projected down from the break.</b> Stop above the right shoulder.',
+  tell:'The volume signature is the real pattern: strong on the left shoulder, <b>weaker on the head, weakest on the right shoulder</b>, then expanding on the breakdown. A right shoulder forming on rising volume is a red flag that the pattern may fail.'
+},
+{
+  name:'Inverse Head & Shoulders', type:'bull', rel:3, keys:'inverse head shoulders bottom neckline',
+  chart:{candles:gen([[0,106],[3,100],[5,102.4],[9,96],[12,102.3],[15,100],[18,102.2],[21,108.5]],0.55),
+    vol:volGen([[0,80],[9,55],[15,32],[18,30],[21,30]],22,[[19,100],[20,120]]), hv:[19,20],
+    lines:[{a:[4,102.4],b:[19,102.4],t:'neckline'}],
+    notes:[{i:3,p:99.2,t:'LS',at:'below'},{i:9,p:95.2,t:'HEAD',at:'below'},{i:15,p:99.2,t:'RS',at:'below'}]},
+  look:'The mirror image at a bottom: three troughs, middle one deepest, resolved by a close <b>above</b> the neckline.',
+  psych:'The head is the final flush (often a selling climax); the right shoulder is the first <b>Higher Low</b> — sellers pressed again and couldn\'t reach the old low. Demand is arriving earlier each time.',
+  trade:'Buy the neckline break or its retest. Target = head depth projected up from the neckline. Stop below the right shoulder.',
+  tell:'Unlike tops, bottom breakouts genuinely <b>need volume</b> — markets can fall on their own weight but need fuel to rise. A breakout on flat volume deserves suspicion; wait for the retest.'
+},
+{
+  name:'Double Top (M)', type:'bear', rel:3, keys:'double top M pattern neckline',
+  chart:{candles:gen([[0,94],[4,104],[7,98.2],[11,103.8],[15,98.3],[18,92.5]],0.5),
+    vol:volGen([[0,60],[4,95],[7,55],[11,48],[15,45]],19,[[16,105],[17,90]]), hv:[16,17],
+    lines:[{a:[6,98.2],b:[16,98.2],t:'neckline',dy:14}],
+    notes:[{i:4,p:104.8,t:'top 1'},{i:11,p:104.6,t:'top 2'}]},
+  look:'Two peaks at roughly the same level (the second may slightly undercut or overshoot), separated by a trough. Confirmed on a close below the trough (neckline).',
+  psych:'The rally back to the high finds the <b>same sellers waiting</b>. Everyone who bought between the two peaks is trapped when the neckline goes — their stops power the decline.',
+  trade:'Short the neckline break/retest. Target = pattern height projected down. Do <b>not</b> short the second peak just because it "looks like" a double top — wait for structure to break.',
+  tell:'Compare the two peaks\' volume: <b>top 2 on clearly lower volume</b> = demand failing at the retest, the classic confirmation. If top 2 comes on higher volume and holds, you may be looking at a consolidation before a breakout instead.'
+},
+{
+  name:'Double Bottom (W)', type:'bull', rel:3, keys:'double bottom W pattern',
+  chart:{candles:gen([[0,106],[4,95],[7,100.2],[11,95.4],[14,100.1],[17,107]],0.5),
+    vol:volGen([[0,60],[4,100],[7,55],[11,48],[14,42]],18,[[15,110],[16,95]]), hv:[15,16],
+    lines:[{a:[6,100.2],b:[15,100.2],t:'neckline'}],
+    notes:[{i:4,p:94.2,t:'bottom 1',at:'below'},{i:11,p:94.6,t:'bottom 2',at:'below'}]},
+  look:'Two troughs at a similar level with a bounce between; confirmed on a close above the middle peak.',
+  psych:'The second decline is the market <b>testing whether the sellers are still there</b>. When the retest holds — especially quietly — supply is spent, and the shorts from bottom 2 must cover.',
+  trade:'Buy the neckline break or the retest of it. Target = pattern height projected up. Aggressive variant: buy the second bottom itself when it prints a reversal candle (hammer/engulfing) — smaller size, tighter stop.',
+  tell:'The single best detail: <b>bottom 2 on much lower volume than bottom 1</b>. Panic happened on the first low; apathy on the second. Apathy at lows is bullish — there is simply no one left to sell.'
+},
+{
+  name:'Triple Top / Bottom', type:'both', rel:2, tagText:'Reversal', keys:'triple top bottom three tests',
+  chart:{candles:gen([[0,94],[3,104],[5,99],[8,103.9],[11,99.1],[14,103.7],[17,98.9],[20,92.6]],0.5),
+    vol:volGen([[0,60],[3,90],[8,60],[14,40],[17,38]],21,[[18,100],[19,88]]), hv:[18,19],
+    lines:[{a:[5,99],b:[18,99],t:'neckline',dy:14}],
+    notes:[{i:3,p:104.8,t:'1'},{i:8,p:104.7,t:'2'},{i:14,p:104.5,t:'3'}]},
+  look:'Three tests of the same level, all rejected, then a break of the opposite boundary. Rarer and slower than doubles, but the third failed test carries extra weight.',
+  psych:'Three attempts is genuine effort — its failure is genuine information. Meanwhile the range has collected a large crowd whose stops all sit just beyond the boundary that finally breaks.',
+  trade:'Same rules as double top/bottom: trade the neckline break, target the range height. The longer the pattern, the bigger the crowd, the stronger the eventual move.',
+  tell:'Careful — "triple top" and "ascending triangle that hasn\'t broken yet" look identical until resolution. If the pullbacks after each test get <b>shallower</b> (higher lows), the pressure is actually building <i>upward</i>. Let the break decide; don\'t pre-judge.'
+},
+{
+  name:'Cup & Handle', type:'bull', rel:2, keys:'cup handle rounded base breakout oneil',
+  chart:{candles:gen([[0,104],[3,98.5],[8,93.5],[13,94],[18,99.5],[21,103.6],[23,101.6],[25,101.9],[27,107.5]],0.5),
+    vol:volGen([[0,80],[8,40],[13,35],[21,60],[23,28],[25,25]],28,[[26,115],[27,100]]), hv:[26,27],
+    levels:[{p:104,t:'rim',dy:-6}],
+    notes:[{i:24,p:100.4,t:'handle',at:'below'}]},
+  look:'A long rounded "U" base (weeks/months), a recovery to the old high (rim), then a small <b>downward-drifting handle</b> in the upper third, then a breakout above the rim/handle high.',
+  psych:'The cup rebuilds confidence slowly; the handle is the final shakeout of impatient holders who bought the bottom and sell at breakeven near the rim. Once they\'re gone, supply overhead is gone.',
+  trade:'Classic growth/momentum entry (O\'Neil): buy the break of the <b>handle\'s high</b>, stop below the handle\'s low. Target ≈ cup depth added to the rim, though these often trend far beyond.',
+  tell:'The handle must be <b>quiet</b>: drifting down on shrinking volume, staying in the upper half of the cup. A deep, high-volume handle means sellers are still active — that\'s not a handle, that\'s rejection at resistance.'
+},
+{
+  name:'Bull Flag', type:'cont', rel:3, tagText:'Bullish continuation', keys:'bull flag pole continuation',
+  chart:{candles:gen([[0,90],[4,104],[7,101.6],[10,100.2],[14,110]],0.5),
+    vol:volGen([[0,60],[4,110],[7,45],[10,30]],15,[[11,120],[12,100]]), hv:[11,12],
+    lines:[{a:[4,104.9],b:[10,101.6],c:'var(--amber)'},{a:[5,101.8],b:[10,99.3],c:'var(--amber)',t:'flag',dy:16}],
+    notes:[{i:2,p:99,t:'pole',dx:-6}]},
+  look:'A near-vertical advance (<b>the pole</b>), then a tight, gently down-sloping channel of small candles (<b>the flag</b>), then a breakout continuing the pole\'s direction.',
+  psych:'After a violent move, early buyers book profits — but the pullback is shallow and orderly because nobody important is selling. Buyers who missed the pole are waiting underneath.',
+  trade:'Enter on the break of the flag\'s upper line (or the flag high); stop below the flag\'s low. <b>Measured target = pole length projected from the breakout.</b> One of the highest win-rate patterns in trending markets.',
+  tell:'Grade the flag by its volume: <b>pole on heavy volume, flag on a sharp dry-up, breakout on expansion</b>. Also count time — the best flags break within roughly the same number of candles the pole took, or fewer. A flag that drags on loses its energy.'
+},
+{
+  name:'Bear Flag', type:'cont', rel:3, tagText:'Bearish continuation', keys:'bear flag pole breakdown continuation',
+  chart:{candles:gen([[0,110],[4,96],[7,98.4],[10,99.8],[14,90]],0.5),
+    vol:volGen([[0,60],[4,110],[7,42],[10,28]],15,[[11,115],[12,95]]), hv:[11,12],
+    lines:[{a:[4,95.1],b:[10,97.9],c:'var(--amber)'},{a:[5,98.4],b:[10,100.7],c:'var(--amber)',t:'flag'}]},
+  look:'A sharp decline (pole), a weak upward-drifting flag on shrinking volume, then a breakdown to new lows.',
+  psych:'The bounce isn\'t buying enthusiasm — it\'s short-covering plus hopeful dip-buyers. When it stalls under the breakdown area, the trapped longs from the pole get a second, worse exit.',
+  trade:'Short the break of the flag\'s lower line; stop above the flag high; target = pole projected down. In downtrends, these repeat in chains — each flag hands off to the next pole.',
+  tell:'The weakest bounces are the most bearish: a bear flag that <b>can\'t even retrace 38% of its pole</b> shows demand is absent. Deep retracements (>61%) start looking like reversals instead — respect that difference.'
+},
+{
+  name:'Pennant', type:'cont', rel:2, tagText:'Continuation', keys:'pennant small triangle pole',
+  chart:{candles:gen([[0,92],[4,106],[5,103.2],[6,105.2],[7,103.8],[8,104.8],[9,104],[10,104.5],[13,112.5]],0.35),
+    vol:volGen([[0,60],[4,115],[6,40],[10,22]],14,[[11,118],[12,95]]), hv:[11,12],
+    lines:[{a:[4,106.4],b:[10,104.9],c:'var(--amber)'},{a:[5,102.8],b:[10,103.9],c:'var(--amber)'}]},
+  look:'Same as a flag but the pause converges into a <b>tiny symmetrical triangle</b> instead of a channel. Pole + coil + break.',
+  psych:'Volatility collapses as both sides shrink their aggression — but the pole already told you which side has the real firepower.',
+  trade:'Identical playbook to flags: break of the coil in the pole\'s direction, stop beyond the opposite side, target = pole length.',
+  tell:'Flags, pennants and rising-three-methods are the <b>same event at different zoom levels</b>: violent move → volume dry-up → resolution. Learn the event, not three separate names.'
+},
+{
+  name:'Ascending Triangle', type:'bull', rel:2, keys:'ascending triangle flat top rising lows',
+  chart:{candles:gen([[0,96],[2,103.8],[4,98.2],[6,103.9],[8,100],[10,103.8],[12,101.6],[14,103.7],[17,109]],0.4),
+    vol:volGen([[0,70],[8,45],[14,28]],18,[[15,110],[16,92]]), hv:[15,16],
+    levels:[{p:104.1,t:'flat supply',dy:-6}],
+    lines:[{a:[4,97.6],b:[14,102.6],c:'var(--amber)',t:'rising demand',dy:16}]},
+  look:'A flat ceiling of equal highs with <b>rising lows</b> pressing up against it. Usually resolves upward, in the direction of the rising side.',
+  psych:'A large seller sits at one price (the flat top) while buyers get more aggressive on every dip — each pullback is bought earlier. Eventually the fixed supply is consumed and price pops through the empty space above.',
+  trade:'Buy the breakout above the flat top (volume expansion required) or the retest of it. Stop below the last rising low; target = triangle height from the break.',
+  tell:'Watch the <b>lows tightening toward the ceiling</b> with volume drying up — that\'s the coiled-spring state. Also beware the classic trap: a brief poke above the line on weak volume that immediately falls back (see Fakeouts, Section 06).'
+},
+{
+  name:'Descending Triangle', type:'bear', rel:2, keys:'descending triangle flat bottom lower highs',
+  chart:{candles:gen([[0,108],[2,100.2],[4,106],[6,100.3],[8,104],[10,100.2],[12,102.4],[14,100.4],[17,95]],0.4),
+    vol:volGen([[0,70],[8,45],[14,28]],18,[[15,108],[16,90]]), hv:[15,16],
+    levels:[{p:99.9,t:'flat support',dy:14}],
+    lines:[{a:[4,106.6],b:[14,101.6],c:'var(--amber)',t:'falling supply'}]},
+  look:'Flat floor, <b>lower highs</b> squeezing down onto it. The mirror of the ascending triangle; typically resolves downward.',
+  psych:'Buyers defend one price while sellers accept worse fills on every bounce — urgency is on the sell side. When the defended bid finally breaks, there is a vacuum below it.',
+  trade:'Short the break of the flat floor or its retest; stop above the last lower high; target = triangle height projected down.',
+  tell:'In strong bull markets this pattern fails upward surprisingly often (the flat support was accumulation, the lower highs were patience). Direction of the <b>break</b>, not the textbook, is the final word — which is true for every triangle.'
+},
+{
+  name:'Symmetrical Triangle', type:'both', rel:1, tagText:'Neutral coil', keys:'symmetrical triangle coil apex',
+  chart:{candles:gen([[0,108],[2,94],[4,105.4],[6,96.4],[8,103],[10,98.4],[12,101.4],[14,99.6],[17,107.5]],0.4),
+    vol:volGen([[0,90],[8,45],[14,22]],18,[[15,112],[16,95]]), hv:[15,16],
+    lines:[{a:[0,108.8],b:[14,101.4],c:'var(--amber)'},{a:[2,93.2],b:[14,98.6],c:'var(--amber)'}]},
+  look:'Lower highs <b>and</b> higher lows converging to an apex; volume contracts steadily into the point. Direction unknown until the break.',
+  psych:'Both sides lose conviction simultaneously; positions and volatility compress. The eventual break forces the entire coiled crowd to react at once — that stored energy is the pattern\'s value.',
+  trade:'No positioning inside the coil. Trade the breakout (ideally in the prior trend\'s direction, the statistical favourite) with stop back inside the triangle. Breaks in the <b>middle third</b> of the triangle are strongest; apex breaks tend to fizzle.',
+  tell:'The pattern is really a <b>volatility signal</b>: contraction predicts expansion. Quant funds trade this idea without ever drawing the triangle. The longer and tighter the squeeze, the more violent the release.'
+},
+{
+  name:'Rising Wedge', type:'bear', rel:2, keys:'rising wedge bearish ending diagonal',
+  chart:{candles:gen([[0,94],[2,100],[4,97.4],[6,102],[8,99.8],[10,103.4],[12,101.9],[14,104.4],[17,96.5]],0.4),
+    vol:volGen([[0,85],[7,50],[14,25]],18,[[15,105],[16,88]]), hv:[15,16],
+    lines:[{a:[2,100.8],b:[14,105.1],c:'var(--amber)'},{a:[0,93.2],b:[14,102.6],c:'var(--amber)'}]},
+  look:'Price rises, but inside <b>converging</b> upward lines — each push gains less than the last. Volume fades as it climbs. Resolves down far more often than up.',
+  psych:'This is a rally running on fumes: new highs by inches, on falling participation. Buyers are paying up while sellers quietly feed them stock the whole way.',
+  trade:'Short the break of the lower line; stop above the last high; first target the wedge\'s origin (its base). As a bearish pattern it can appear both at tops and as a weak bounce in downtrends.',
+  tell:'Measure momentum candle-by-candle: in a healthy trend, impulse candles stay big. In a wedge the <b>green bodies shrink while wicks grow</b>. That deceleration — visible without any indicator — is the same thing RSI divergence measures.'
+},
+{
+  name:'Falling Wedge', type:'bull', rel:2, keys:'falling wedge bullish',
+  chart:{candles:gen([[0,106],[2,100],[4,102.6],[6,98],[8,100.2],[10,96.6],[12,98.1],[14,95.6],[17,103.5]],0.4),
+    vol:volGen([[0,85],[7,50],[14,24]],18,[[15,108],[16,92]]), hv:[15,16],
+    lines:[{a:[0,106.8],b:[14,97.4],c:'var(--amber)'},{a:[2,99.2],b:[14,94.9],c:'var(--amber)'}]},
+  look:'Price falls inside converging downward lines — each new low undercuts by less, on drying volume. Resolves upward more often than not.',
+  psych:'Sellers still control direction but are visibly losing force; every flush finds buyers slightly earlier. The decline is decelerating into a floor.',
+  trade:'Buy the break of the upper line (volume confirmation matters here — it\'s a bottom pattern); stop below the wedge low; first target the wedge origin.',
+  tell:'The wedge pair is easy to memorize wrong. Anchor it to logic instead: <b>a trend that decelerates while volume dies is ending</b>. Rising wedge = dying rally. Falling wedge = dying decline. That\'s the whole rule.'
+},
+{
+  name:'Rounding Bottom (Saucer)', type:'bull', rel:2, keys:'rounding bottom saucer accumulation base',
+  chart:{candles:gen([[0,105],[4,99],[8,95.2],[12,93.9],[16,95],[20,99.4],[23,106.5]],0.45),
+    vol:volGen([[0,80],[8,38],[12,30],[16,36],[20,60]],24,[[21,100],[22,110]]), hv:[21,22],
+    levels:[{p:104.5,t:'rim',dy:-6}]},
+  look:'A slow, smooth "saucer" — decline decelerates, flattens, then acceleration builds on the right side. Often takes months; volume traces the same U-shape.',
+  psych:'The most patient pattern: sellers exhaust gradually, ownership transfers from weak hands to strong hands at the lows, and the right side rises as that accumulated supply is simply no longer for sale.',
+  trade:'Two entries: aggressive — the right side as it clears the down-sloping resistance with volume returning; conservative — the rim breakout. These bases support long, durable trends because the overhead supply was absorbed slowly.',
+  tell:'The tell is <b>volume symmetry</b>: quietest at the very bottom of the saucer, waking up on the right side <i>before</i> the price breakout. Volume leads price out of long bases — watch for accumulation volume while price is still flat.'
+}
+];
+ 
+/* ============================================================
+   SECTION 06 — VOLUME & HIDDEN TELLS
+   ============================================================ */
+const VOLS=[
+{
+  name:'The First Law: volume validates', type:'concept', rel:3, tagText:'Volume principle', keys:'volume confirmation breakout valid fake low',
+  chart:{candles:[C(97,99.6,96.4,99),C(99,99.8,96.8,97.2),C(97.2,99.4,96.6,98.8),C(98.8,100.1,98,99.4),C(99.4,100.6,98.6,98.9),C(98.9,99.2,96.6,97),C(97,98.6,96.2,98.2),C(98.2,99.6,97.8,99.2),C(99.2,99.9,98,98.4),C(98.4,99.5,97.6,99.3),C(99.3,101.9,99.1,101.6),C(101.6,102.8,100.9,102.4)],
+    vol:[55,50,45,42,38,44,40,36,34,33,132,96], hv:[10],
+    levels:[{p:100.1,t:'resistance',dy:-6}],
+    notes:[{i:4,p:100.6,t:'weak poke'},{i:10,p:101.9,t:'real break',dx:-4}]},
+  look:'Two attempts at the same level: a poke on <b>fading volume</b> that fails, and later a break on <b>2–3× average volume</b> that holds. Same price event — opposite meaning.',
+  psych:'A breakout is a claim that the crowd\'s opinion of value has changed. Volume is the number of participants endorsing the claim. No endorsement, no breakout — just price wandering over a line.',
+  trade:'Rule of thumb: only trust breakouts on well above-average volume (many traders want ≥150% of the 20-day average). Low-volume breaks are for watching, not buying — or for fading.',
+  tell:'The corollary most people miss: <b>declines need no volume</b>. Price falls under its own weight when bids vanish. So demand volume on upside breaks, but don\'t dismiss a quiet slide — quiet slides are how distribution ends.'
+},
+{
+  name:'Volume Dry-Up before the Break (VCP)', type:'concept', rel:3, tagText:'Volume principle', keys:'volume dry up contraction vcp minervini tightening supply',
+  chart:{candles:gen([[0,96],[3,106],[6,99.2],[9,105],[11,101.2],[13,104.4],[15,102.8],[17,104],[19,109.5]],0.4),
+    vol:volGen([[0,95],[6,60],[11,40],[15,26],[17,20]],20,[[18,105],[19,118]]), hv:[18,19],
+    notes:[{i:16,p:102,t:'tight + quiet',at:'below'}]},
+  look:'Each pullback inside a base gets <b>shallower</b>, each swing <b>tighter</b>, and volume shrinks step by step — until the day-to-day range is tiny and turnover is dead. Then the breakout comes.',
+  psych:'Shrinking pullbacks on shrinking volume mean sellers are progressively finished — everyone who wanted out has gotten out. Supply has evaporated; the smallest new demand now moves price violently.',
+  trade:'This is the core of Minervini\'s Volatility Contraction Pattern and the quiet engine inside cup-and-handles, flags and triangles. Buy the range break out of the final, tightest contraction; the dry-up itself is what makes the stop small and the payoff asymmetric.',
+  tell:'The single most useful screening habit: hunt for <b>quiet, tight, boring</b> price action near highs. Excitement is for exits. The best entries feel like nothing is happening.'
+},
+{
+  name:'Effort vs Result (Wyckoff)', type:'concept', rel:3, tagText:'Volume principle', keys:'effort result wyckoff absorption anomaly no progress',
+  chart:{candles:[C(100,100.4,96.8,97.2),C(97.2,97.5,94,94.4),C(94.4,95.6,92.8,94.2),C(94.2,95.4,93,94.6),C(94.6,97.6,94.2,97.2),C(97.2,99.4,96.8,99)],
+    vol:[52,68,155,142,84,70], hv:[2,3],
+    notes:[{i:2,p:92.8,t:'huge effort',at:'below'},{i:3,p:93,t:'no result',at:'below'}]},
+  look:'Enormous volume (effort) that produces a tiny candle or no new ground (result). Here: the two highest-volume days of the decline can\'t push price lower.',
+  psych:'Someone is taking the other side of all that selling — at scale, on purpose. Panic supply is being <b>absorbed</b> into large resting bids. The seller runs out before the buyer does.',
+  trade:'Effort/result anomalies mark turning zones, not entry ticks. Mark the zone, then wait for the standard trigger (reversal candle, structure break) with the anomaly as your "why".',
+  tell:'It works in both directions: huge volume at new highs with a stalling candle = buying being absorbed by distribution. Any time <b>effort and result disagree, side with whoever is absorbing</b>.'
+},
+{
+  name:'Climax Volume (Capitulation)', type:'concept', rel:2, tagText:'Volume principle', keys:'selling climax capitulation exhaustion buying climax blow off',
+  chart:{candles:[C(104,104.4,101.6,102),C(102,102.3,99,99.4),C(99.4,99.6,95.6,96),C(96,96.2,90.4,92.6),C(92.6,95.9,92.2,95.5),C(95.5,98.4,95.2,98)],
+    vol:[44,58,76,168,92,70], hv:[3],
+    notes:[{i:3,p:90.4,t:'climax bar',at:'below'}]},
+  look:'A trend that <b>accelerates</b> into its largest candle on its largest volume — often with a long tail — then immediately stabilizes. At lows: selling climax. At highs: buying climax / blow-off top.',
+  psych:'Climax is the moment the last holdouts break: stop-loss cascades, margin calls, "get me out at any price". Maximum emotion transfers maximum shares — usually into very patient hands.',
+  trade:'Never catch the climax bar itself. The playbook: climax → automatic rally → <b>secondary test of the low on far less volume</b> → that quiet test is the real entry (Wyckoff\'s sequence).',
+  tell:'Record-volume days at trend extremes make excellent long-term markers: months later, price still "remembers" that bar\'s range. Mark the high/low of climax bars and keep them on your chart.'
+},
+{
+  name:'Spring / Stop-Hunt Fakeout', type:'bull', rel:3, tagText:'Trap pattern', keys:'spring stop hunt fakeout liquidity grab false breakdown shakeout upthrust',
+  chart:{candles:[C(99,100.2,97.8,98.2),C(98.2,99.6,96.2,96.8),C(96.8,98.8,96,98.4),C(98.4,100,97.6,98),C(98,98.4,94.2,96.6),C(96.6,99.4,96.2,99.1),C(99.1,101.8,98.8,101.4)],
+    vol:[46,54,48,44,118,88,104], hv:[4],
+    levels:[{p:96,t:'support everyone sees',dy:14}],
+    notes:[{i:4,p:94.2,t:'spring',at:'below'},{i:6,p:101.8,t:'real move'}]},
+  look:'Price briefly <b>breaks an obvious support</b>, triggers the stops resting under it, then snaps back inside the range within one or two candles — and rallies. The bearish mirror is the <b>upthrust</b> (fake break above resistance).',
+  psych:'Obvious levels accumulate stop-loss orders — a pool of guaranteed sellers below support. Large buyers push price into that pool to fill size at the best price, then let it run. The "failed pattern" was the plan.',
+  trade:'The reclaim is the signal: entry when price closes back above the broken level; stop below the spring\'s wick low. Risk is tiny (the wick) versus a target at the top of the range or beyond — elite risk/reward.',
+  tell:'Rule of thumb that saves accounts: <b>the more obvious the level, the more likely the first break of it is a trap</b>. And a genuine breakdown doesn\'t come back — instant reclaims are the market confessing the break was for liquidity, not direction.'
+},
+{
+  name:'Breakout → Retest', type:'concept', rel:3, tagText:'Entry technique', keys:'retest pullback role reversal breakout entry throwback',
+  chart:{candles:[C(97.6,99.2,97,98.6),C(98.6,99.8,97.8,99.2),C(99.2,101.9,99,101.5),C(101.5,102,100.1,100.5),C(100.4,100.8,99.8,100.3),C(100.3,103.2,100,102.8),C(102.8,104.4,102.4,104)],
+    vol:[45,50,120,55,38,98,80], hv:[2,5],
+    levels:[{p:100,t:'old resistance → new support',dy:14}],
+    notes:[{i:4,p:99.8,t:'retest holds',at:'below'}]},
+  look:'A breakout, then a calm pullback to the broken level (the "throwback"), which now acts as support — then continuation. Roughly half of all breakouts offer this second chance.',
+  psych:'The retest is where three crowds agree: breakout buyers defend their entry, sideline buyers finally get their pullback, and shorts from the old range cover at breakeven. Triple demand at one price.',
+  trade:'Chasing the breakout candle buys the worst price with the widest stop. The retest entry gives a tighter stop (just below the level) and confirmation that the flip is real. If you miss a breakout — <b>don\'t chase, set an alert at the level</b>.',
+  tell:'Quality check on the retest: it should arrive on <b>shrinking volume</b> (no eager sellers) and hold as a shallow, sideways-drifting dip. A retest that slices back through the level on volume wasn\'t a retest — the breakout failed, and failed breakouts travel fast the other way.'
+},
+{
+  name:'Volume Divergence at Highs', type:'bear', rel:2, tagText:'Warning signal', keys:'volume divergence declining participation weak rally',
+  chart:{candles:gen([[0,94],[4,100],[6,98.2],[10,103],[12,101.2],[15,105.5]],0.45),
+    vol:volGen([[0,110],[4,95],[10,60],[15,32]],16), 
+    notes:[{i:4,p:100.9,t:'HH'},{i:10,p:103.8,t:'HH'},{i:15,p:106.3,t:'HH, dying volume'}]},
+  look:'Price prints higher highs while each rally leg carries <b>less volume</b> than the last. The trend is rising on falling participation.',
+  psych:'Fewer and fewer buyers are willing to pay these prices; the advance continues only because sellers are patient. When the thin demand pauses, there is nothing underneath.',
+  trade:'Divergence is a <b>condition, not a trigger</b> — trends can diverge for months. Use it to stop adding, tighten stops, and take reversal patterns (evening stars, engulfings, wedge breaks) more seriously when they appear.',
+  tell:'The same logic powers <b>RSI/momentum divergence</b>: price makes a higher high, RSI makes a lower high — momentum fading beneath a rising surface. Volume divergence and RSI divergence together, at resistance, is one of the most respected top-warning stacks in technical analysis.'
+},
+{
+  name:'Gaps: Breakaway, Runaway, Exhaustion', type:'concept', rel:2, tagText:'Gap reading', keys:'gap breakaway runaway measuring exhaustion fill',
+  chart:{candles:[C(88.8,90.4,88.2,90),C(90,90.6,88.6,89),C(89,90.2,88.4,89.8),C(92.2,94.6,92,94.2),C(94.2,96.4,93.8,96),C(97.8,100.2,97.4,99.8),C(99.8,101.6,99.2,101.2),C(103.4,104.9,103,103.6),C(103.2,103.5,99.6,100)],
+    vol:[40,38,36,125,90,105,85,140,120], hv:[3,7],
+    notes:[{i:3,p:92,t:'breakaway',at:'below'},{i:5,p:97.4,t:'runaway',at:'below'},{i:7,p:104.9,t:'exhaustion'}]},
+  look:'Three species of gap: <b>breakaway</b> (out of a base — starts trends), <b>runaway/measuring</b> (mid-trend on strength — often marks the halfway point), <b>exhaustion</b> (late, on frantic volume, quickly reversed and filled).',
+  psych:'A gap is an overnight repricing — urgency so strong it couldn\'t wait for the open auction. Early urgency is information; late urgency is the crowd arriving after the move is done.',
+  trade:'Breakaway gaps from valid bases should <b>not fill quickly</b> — holding above the gap is the health check. An exhaustion gap identifies itself in hindsight: a gap in a mature trend that fills within a few candles. That fill is the reversal signal.',
+  tell:'"Gaps always fill" is a myth that bankrupts counter-trend traders — breakaway and runaway gaps in strong trends can stay open for years. What\'s true: gaps become <b>support/resistance zones</b>. Price returning to a gap tends to react at its edges.'
+},
+{
+  name:'Failed Patterns Travel Fastest', type:'concept', rel:2, tagText:'Contrarian principle', keys:'failed pattern head shoulders trap fast move opposite',
+  chart:{candles:gen([[0,96],[3,102],[5,99.6],[8,105.5],[11,99.8],[13,101.8],[15,99.7],[16,101],[19,108.5]],0.5),
+    vol:volGen([[0,70],[8,55],[15,35]],20,[[17,115],[18,105]]), hv:[17,18],
+    lines:[{a:[4,99.6],b:[16,99.6],t:'neckline holds',dy:14}],
+    notes:[{i:8,p:106.3,t:'head'},{i:19,p:109.2,t:'failure = fuel'}]},
+  look:'A textbook pattern that everyone can see — here a head & shoulders — whose trigger never confirms (the neckline holds), and price rips <b>the other way</b> through the pattern.',
+  psych:'Popular patterns fill the market with anticipatory positions: shorts pre-load the H&S, stops stack above the right shoulder. When the pattern fails, all of them are wrong simultaneously — and their forced exits become the fuel for the opposite move.',
+  trade:'Two upgrades: (1) never position before the trigger — anticipating patterns is how you become the fuel; (2) trade failures deliberately — e.g. a close back above a broken neckline, or an "failed bear flag" reclaiming its pole, are aggressive entries with the trapped crowd behind you.',
+  tell:'The classic quip — <b>"from failed moves come fast moves"</b> — exists because trapped traders <i>must</i> transact; ordinary opportunity-seekers can wait. Forced flow moves markets harder than voluntary flow. When you\'re stopped out of an "obvious" pattern, look immediately for the reverse trade.'
+},
+{
+  name:'Small Tells That Compound', type:'concept', rel:2, tagText:'Field notes', keys:'round numbers close location wick clusters confluence checklist tells',
+  look:'A grab-bag of quiet observations that grade every setup: <b>(1) Close location</b> — where a candle closes within its own range is a vote; a breakout day closing at its high beats one closing mid-range. <b>(2) Round numbers</b> (100, 500, 1000…) act as magnets and battlegrounds — patterns forming <i>at</i> them carry extra weight. <b>(3) Wick clusters</b> — repeated wicks into the same zone map exactly where large resting orders sit, before any "pattern" exists. <b>(4) Time of test</b> — support tested for the 4th–5th time in quick succession usually breaks; each test consumes the resting bids that made it support.',
+  psych:'None of these is a system alone. They are tie-breakers — each one shifts probability a few points, and stacked together they routinely separate the A+ setup from the identical-looking C setup.',
+  trade:'Build them into a pre-trade checklist rather than trying to "feel" them: pattern ✓ level ✓ volume ✓ close location ✓ higher-timeframe alignment ✓. Five small edges stacked is a real edge.',
+  tell:'The meta-tell: <b>the market rewards what is true but not yet obvious</b>. Candle names are obvious; volume behaviour, close location and trapped-trader logic are less so. That is exactly why they still work.'
+}
+];
+ 
+/* ============================================================
+   SECTION 07 — PLAYBOOK
+   ============================================================ */
+const PLAY=[
+{h:'The pre-trade checklist',type:'checks',items:[
+ '<b>Higher-timeframe context</b> — is this trade with or against the weekly/daily structure?',
+ '<b>Location</b> — is the pattern at a meaningful level (S/R, prior breakout, round number), or floating mid-air?',
+ '<b>Pattern quality</b> — clean textbook shape, correct volume signature, tight risk point?',
+ '<b>Trigger defined</b> — the exact price/close that makes you act. No trigger, no trade.',
+ '<b>Stop defined</b> — beyond the structure that invalidates the idea (a wick low, a shoulder, a flag boundary), never a random % .',
+ '<b>Reward:risk ≥ 2:1</b> — measured target vs stop distance. If it doesn\'t clear 2:1, skip it; another bus always comes.',
+ '<b>Position size from stop</b> — risk a fixed small % of capital (commonly 0.5–1%); shares = risk amount ÷ stop distance.',
+ '<b>Exit plan</b> — scale at target? trail below higher lows? Decide before entry, when you\'re still objective.']},
+{h:'Common beginner mistakes',type:'list',items:[
+ '<b>Pattern-spotting everywhere</b> — forcing shapes onto noise. If you have to squint, it isn\'t there.',
+ '<b>Trading the name, not the context</b> — a hammer means nothing 40% up a parabolic move.',
+ '<b>Entering before the trigger</b> — anticipated patterns make you the trapped liquidity when they fail.',
+ '<b>Ignoring volume</b> — the single highest-value habit upgrade in this entire book.',
+ '<b>Moving stops</b> — the stop marks where you\'re wrong; widening it converts a small planned loss into a large unplanned one.',
+ '<b>Revenge trading a failed pattern</b> — instead, remember: failed moves → fast moves the other way. Reassess, don\'t re-enter the same idea bigger.',
+ '<b>Backtesting nothing</b> — every claim here is testable. Test your favourite three patterns on your market before risking a rupee.']},
+{h:'How reliability really works',type:'text',body:'No pattern "works" or "fails" in isolation — each is a small probability shift whose payoff depends on execution. A setup with a 45% win rate and 3:1 reward-to-risk is a money machine; a 70% win rate with 0.5:1 is a slow bleed. This is why the checklist obsesses over stops and targets rather than win rate. Grade setups A/B/C by how many confirmations stack (trend + level + pattern + volume + close location + multi-timeframe), size up only on A\'s, and journal every trade with a screenshot. Your own journal, on your own market and timeframe, will eventually outrank any book — including this one.'},
+{h:'A note on indicators',type:'text',body:'This book is deliberately price-and-volume-first, because every indicator is derived from them. Once fluent, two additions blend well: a couple of moving averages (e.g. 20/50 EMA) as dynamic S/R and trend filters, and RSI purely for divergence-spotting at extremes. Indicators confirm; they should never generate the idea. If your chart has more panels than price, you\'re studying the derivative and ignoring the function.'}
+];
+ 
+/* ============================================================
+   HERO CHART — the whole course in one picture
+   ============================================================ */
+const heroCandles = [
+  C(108,108.6,105.4,105.8),C(105.8,106.2,102.6,103),C(103,103.3,99.4,99.8),          // downtrend
+  C(99.8,100,93.2,95.4),                                                              // climax
+  C(95.4,98.6,95,98.2),C(98.2,99.8,96.8,97.4),C(97.4,98.9,95.8,98.4),                 // base
+  C(98.4,99.6,97.2,97.8),C(97.8,98.2,93.6,96.9),                                      // spring
+  C(96.9,99.5,96.5,99.2),C(99.2,101.4,98.9,101.1),                                    // markup
+  C(101.1,103.9,100.8,103.6),                                                         // breakout
+  C(103.6,104,101.4,101.9),C(101.8,102.4,101,102.1),                                  // retest
+  C(102.1,105.4,101.8,105),C(105,107.6,104.6,107.2)                                   // trend
+];
+const HERO={candles:heroCandles, h:180,
+  vol:[55,66,80,170,70,52,44,40,120,85,78,135,50,36,100,90], hv:[3,8,11],
+  levels:[{p:99.9,t:'range high → support',dy:-6,tx:12},{p:95.9,c:'var(--muted)',t:'support',dy:14,tx:5}],
+  notes:[{i:3,p:93.2,t:'climax volume',at:'below'},{i:8,p:93.6,t:'spring',at:'below'},{i:11,p:103.9,t:'breakout'},{i:13,p:101,t:'retest',at:'below'}]
+};
+ 
+/* ============================================================
+   BUILD
+   ============================================================ */
+document.getElementById('heroChart').innerHTML = svgChart(HERO);
+document.getElementById('foundGrid').innerHTML = FOUND.map(card).join('');
+document.getElementById('singleGrid').innerHTML = SINGLES.map(card).join('');
+document.getElementById('doubleGrid').innerHTML = DOUBLES.map(card).join('');
+document.getElementById('tripleGrid').innerHTML = TRIPLES.map(card).join('');
+document.getElementById('chartGrid').innerHTML = CHARTS.map(card).join('');
+document.getElementById('volGrid').innerHTML = VOLS.map(card).join('');
+ 
+document.getElementById('playGrid').innerHTML = PLAY.map(p=>{
+  let inner='';
+  if(p.type==='checks') inner=`<ol class="checks">${p.items.map(i=>`<li><span>${i}</span></li>`).join('')}</ol>`;
+  else if(p.type==='list') inner=`<ul class="plain">${p.items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
+  else inner=`<p class="body">${p.body}</p>`;
+  return `<article class="card" data-search="${p.h.toLowerCase()}"><div><h3>${p.h}</h3></div>${inner}</article>`;
+}).join('');
+ 
+/* search */
+const searchEl=document.getElementById('search');
+searchEl.addEventListener('input',()=>{
+  const q=searchEl.value.trim().toLowerCase();
+  document.querySelectorAll('.card').forEach(c=>{
+    c.style.display = !q || (c.dataset.search||'').includes(q) || c.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+ 
+/* scrollspy */
+const links=[...document.querySelectorAll('nav.side a')];
+const secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+const spy=new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      links.forEach(l=>l.classList.toggle('active', l.getAttribute('href')==='#'+e.target.id));
+    }
+  });
+},{rootMargin:'-20% 0px -70% 0px'});
+secs.forEach(s=>s&&spy.observe(s));
+</script>
+</body>
+</html>
+ 
